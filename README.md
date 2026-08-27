@@ -6,34 +6,36 @@ Rotating posts from your [Bananas from Work](https://bananasfromwork.com) feed a
 Fable · 🍌 monday banana on the standup desk · @oskar · 2h
 ```
 
-- Shows the latest 20 posts from your feed (contacts and world), rotating about once a minute
-- Includes the ripe side if your account has the subscription: dark posts render with a 🌚 instead of a 🍌 (non-subscribers just never see any)
+- Shows the latest 20 posts you can see (contacts, world, circles), rotating about once a minute
+- Includes the ripe side if your account has the subscription: dark posts render with a 🌚 instead of a 🍌
 - Clickable in terminals with hyperlink support (iTerm2, Kitty, WezTerm, Ghostty): opens the post on bananasfromwork.com
-- Never blocks your session: the line reads a local cache, and a detached background job refreshes the feed every 10 minutes through the repo's `bananas` CLI
+- Never blocks your session: the line reads a local cache, and a detached background job refreshes the feed every 10 minutes straight from the backend
 
-## Setup
+## Install, from scratch
 
-1. Install the plugin:
+1. In Claude Code:
 
    ```
-   /plugin marketplace add /path/to/bananasfromwork-plugin
+   /plugin marketplace add casselryd/bananasfromwork-plugin
    /plugin install bananasfromwork@bananasfromwork
    ```
 
-2. Point it at a checkout of the bananasfromwork repo (the feed is fetched with `scripts/bananas.ts`, which owns auth):
+   (Or `add /path/to/bananasfromwork-plugin` for a local checkout.)
+
+2. In any terminal, log in (password prompt is hidden; accounts are created at [bananasfromwork.com/signup](https://bananasfromwork.com/signup)):
 
    ```sh
-   mkdir -p ~/.config/bananasfromwork-claude
-   echo '{"repo": "/path/to/bananasfromwork"}' > ~/.config/bananasfromwork-claude/config.json
+   bananasfromwork-login
    ```
 
-   The `BANANASFROMWORK_REPO` env var overrides the config file.
+3. Restart Claude Code. If the statusline does not appear, run `/bananasfromwork:statusline` and Claude wires it into your settings.
 
-3. Log in as yourself with `/bananasfromwork:login`. It stores a plugin-owned session in `~/.config/bananasfromwork-claude/session.json` (passed to the CLI via `BANANAS_SESSION_FILE`), so it never touches the session your repo checkout is using. Without it, the statusline falls back to the repo CLI's default session.
+That's it. `bananasfromwork-login --logout` signs out again.
 
-4. If the statusline does not appear after a restart, run `/bananasfromwork:statusline` and Claude will wire it into your settings.
+## How it works
+
+The plugin talks directly to the app's Supabase backend with the same public URL and publishable key the web app ships to every browser; row level security decides what your session can see, so one query returns exactly your feed, ripe side included only when your account has it. Your session lives in `~/.config/bananasfromwork-claude/session.json` (0600) and is used by nothing but this plugin; tokens auto-refresh on each feed fetch. The feed cache lives in `~/.cache/bananasfromwork-claude/`.
 
 ## Requirements
 
-- `node` on PATH (renders the line); `bun` preferred for the feed refresh
-- A bananasfromwork checkout with a logged-in `bananas` CLI session
+- `node` on PATH

@@ -4,53 +4,27 @@
  *
  * Rotating posts from your Bananas from Work feed while you wait, in the
  * style of the daily.dev headlines plugin: the visible line only reads a
- * local cache, and a detached background refresh fetches the feed through
- * the repo's `bananas` CLI (which owns auth and token refresh).
+ * local cache, and a detached background refresh fetches the feed straight
+ * from the Supabase backend (see api.mjs). One query covers both sides;
+ * RLS hides ripe side (dark) posts from accounts without the subscription.
  *
- * Feeds: the regular feed plus the ripe side (dark) feed. Non-subscribers
- * simply get an empty dark feed back from RLS, so both are always fetched.
- *
- * Auth: if ~/.config/bananasfromwork-claude/session.json exists (created by
- * the /bananasfromwork:login skill), the CLI is pointed at it via
- * BANANAS_SESSION_FILE, so the plugin has its own login independent of the
- * repo checkout's dev session. Without it, the CLI's default session is used.
- *
- * Config resolution for the repo that hosts scripts/bananas.ts:
- *   1. BANANASFROMWORK_REPO env var
- *   2. ~/.config/bananasfromwork-claude/config.json {"repo": "/path"}
+ * Auth: bin/bananasfromwork-login stores a plugin-owned session; without
+ * one the line shows a login hint instead of a feed.
  */
-import {
-  readFileSync,
-  writeFileSync,
-  mkdirSync,
-  statSync,
-  existsSync,
-} from 'node:fs';
-import { spawn, execFileSync } from 'node:child_process';
+import { readFileSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { loadSession, fetchPosts, SITE } from './api.mjs';
 
-const CONFIG_DIR = join(homedir(), '.config', 'bananasfromwork-claude');
-const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
-const SESSION_FILE = join(CONFIG_DIR, 'session.json');
 const CACHE_DIR = join(homedir(), '.cache', 'bananasfromwork-claude');
 const CACHE_FILE = join(CACHE_DIR, 'feed.json');
 const ROTATE_SECONDS = 60;
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const MAX_ITEMS = 20;
 const MAX_CAPTION = 70;
-const SITE = process.env.BANANASFROMWORK_SITE || 'https://bananasfromwork.com';
 const COLOR_ENABLED = !process.env.NO_COLOR;
-
-function repoPath() {
-  if (process.env.BANANASFROMWORK_REPO) return process.env.BANANASFROMWORK_REPO;
-  try {
-    return JSON.parse(readFileSync(CONFIG_FILE, 'utf8')).repo ?? null;
-  } catch {
-    return null;
-  }
-}
 
 function readCache() {
   try {
@@ -68,57 +42,6 @@ function cacheIsStale() {
   }
 }
 
-function runner() {
-  for (const cmd of ['bun', 'node']) {
-    try {
-      execFileSync(cmd, ['--version'], { stdio: 'ignore' });
-      return cmd;
-    } catch {
-      // try the next one
-    }
-  }
-  return null;
-}
-
-function fetchFeed(cmd, repo, dark) {
-  const args = ['scripts/bananas.ts', 'feed', '--limit', '40'];
-  if (dark) args.push('--dark');
-  const env = existsSync(SESSION_FILE)
-    ? { ...process.env, BANANAS_SESSION_FILE: SESSION_FILE }
-    : process.env;
-  let out;
-  try {
-    out = execFileSync(cmd, args, {
-      cwd: repo,
-      env,
-      encoding: 'utf8',
-      timeout: 30_000,
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-  } catch (e) {
-    // the CLI prints {"ok":false,...} on stdout even when exiting 1
-    out = e.stdout?.toString() ?? '';
-  }
-  let parsed;
-  try {
-    parsed = JSON.parse(out);
-  } catch {
-    return { error: 'bananas CLI gave no JSON (is the repo path right?)' };
-  }
-  if (!parsed.ok) return { error: parsed.error ?? 'feed failed (are you logged in?)' };
-  const posts = [...(parsed.data.contacts ?? []), ...(parsed.data.world ?? [])];
-  return {
-    posts: posts.map((p) => ({
-      id: p.id,
-      caption: (p.caption ?? '').replace(/\s+/g, ' ').trim(),
-      handle: p.author?.handle ?? 'someone',
-      created_at: p.created_at,
-      section: p.section,
-      dark,
-    })),
-  };
-}
-
 async function refreshCache() {
   const prev = readCache();
   const writeState = (state) => {
@@ -132,21 +55,18 @@ async function refreshCache() {
     else writeState({ fetchedAt: Date.now(), items: [], error });
   };
 
-  const repo = repoPath();
-  if (!repo) return keepOrError('set BANANASFROMWORK_REPO or ' + CONFIG_FILE);
-  const cmd = runner();
-  if (!cmd) return keepOrError('bananas CLI needs bun or node on PATH');
+  const session = await loadSession();
+  if (!session) return keepOrError('run bananasfromwork-login to see your feed');
 
-  // Regular feed plus the ripe side; without the subscription the dark feed
-  // is just empty, so a dark error only matters if the light fetch also fails.
-  const light = fetchFeed(cmd, repo, false);
-  const dark = fetchFeed(cmd, repo, true);
-  if (!light.posts && !dark.posts) return keepOrError(light.error);
+  let result;
+  try {
+    result = await fetchPosts(session);
+  } catch {
+    return keepOrError('feed unreachable, will retry');
+  }
+  if (result.error) return keepOrError(result.error);
 
-  const items = [...(light.posts ?? []), ...(dark.posts ?? [])]
-    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
-    .slice(0, MAX_ITEMS);
-
+  const items = result.posts.slice(0, MAX_ITEMS);
   if (!items.length) return keepOrError('feed is empty, go post a banana');
   writeState({ fetchedAt: Date.now(), items });
 }

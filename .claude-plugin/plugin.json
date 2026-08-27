@@ -1,8 +1,8 @@
 {
   "name": "bananasfromwork",
   "displayName": "Bananas from Work",
-  "description": "Rotating posts from your Bananas from Work feed at the bottom of your Claude Code sessions, daily.dev style",
-  "version": "2.1.0",
+  "description": "Your Bananas from Work feed at the bottom of your Claude Code sessions. Self-contained: install, log in once, done",
+  "version": "3.0.0",
   "author": {
     "name": "Oskar Casselryd"
   },

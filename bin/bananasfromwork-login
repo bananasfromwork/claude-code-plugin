@@ -1,0 +1,73 @@
+#!/usr/bin/env node
+/**
+ * Log the Bananas from Work statusline into an account.
+ *
+ * Interactive by default (password input is hidden); --email and --password
+ * flags exist for scripted use. --logout removes the stored session.
+ * The session lands in ~/.config/bananasfromwork-claude/session.json and is
+ * used only by this plugin.
+ */
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { join, dirname } from 'node:path';
+import readline from 'node:readline';
+import {
+  passwordLogin,
+  saveSession,
+  clearSession,
+  fetchHandle,
+  SESSION_FILE,
+} from '../statusline/api.mjs';
+
+const args = process.argv.slice(2);
+const flag = (name) => {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 ? args[i + 1] : undefined;
+};
+
+if (args.includes('--logout')) {
+  clearSession();
+  console.log('Logged out. The statusline will ask for a login again.');
+  process.exit(0);
+}
+
+function ask(question, { hidden = false } = {}) {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+    if (hidden) {
+      const write = rl._writeToOutput.bind(rl);
+      rl._writeToOutput = (s) => {
+        // echo the prompt and newlines, mask the typed characters
+        if (s.includes(question) || s.includes('\n')) write(s);
+        else write('*');
+      };
+    }
+    rl.question(question, (answer) => {
+      rl.close();
+      if (hidden) process.stdout.write('\n');
+      resolve(answer.trim());
+    });
+  });
+}
+
+const email = flag('email') ?? (await ask('email: '));
+const password = flag('password') ?? (await ask('password: ', { hidden: true }));
+if (!email || !password) {
+  console.error('email and password are required');
+  process.exit(2);
+}
+
+const result = await passwordLogin(email, password);
+if (result.error) {
+  console.error(`Login failed: ${result.error}`);
+  process.exit(1);
+}
+saveSession(result.session);
+
+const handle = await fetchHandle(result.session).catch(() => null);
+console.log(`Logged in${handle ? ` as @${handle}` : ''}. Session stored in ${SESSION_FILE}`);
+
+// warm the feed cache so the statusline shows this account right away
+const statusline = join(dirname(fileURLToPath(import.meta.url)), '..', 'statusline', 'statusline.mjs');
+spawn(process.execPath, [statusline, '--refresh'], { detached: true, stdio: 'ignore' }).unref();
+console.log('Your feed will be at the bottom of your next Claude Code session.');
