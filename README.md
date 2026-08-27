@@ -1,12 +1,12 @@
 # 🍌 Bananas from Work, for Claude Code
 
-Rotating posts from your [Bananas from Work](https://bananasfromwork.com) feed at the bottom of your Claude Code sessions, in the style of the daily.dev headlines plugin.
+The latest post from your [Bananas from Work](https://bananasfromwork.com) feed at the bottom of your Claude Code sessions, in the style of the daily.dev headlines plugin.
 
 ```
 Fable · 🍌 monday banana on the standup desk · @oskar · 2h
 ```
 
-- Shows the latest 20 posts you can see (contacts, world, circles), rotating about once a minute
+- Shows the latest post you can see (contacts, world, circles)
 - Includes the ripe side if your account has the subscription: dark posts render with a 🌚 instead of a 🍌
 - Clickable in terminals with hyperlink support (iTerm2, Kitty, WezTerm, Ghostty): opens the post on bananasfromwork.com
 - Never blocks your session: the line reads a local cache, and a detached background job refreshes the feed every 10 minutes straight from the backend
