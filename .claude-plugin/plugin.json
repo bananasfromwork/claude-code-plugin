@@ -1,10 +1,10 @@
 {
   "name": "bananasfromwork",
   "displayName": "Bananas from Work",
-  "description": "🍌 Bananas from work at the bottom of your Claude Code sessions",
-  "version": "1.0.0",
+  "description": "Rotating posts from your Bananas from Work feed at the bottom of your Claude Code sessions, daily.dev style",
+  "version": "2.0.0",
   "author": {
     "name": "Oskar Casselryd"
   },
-  "keywords": ["statusline", "bananas", "fun"]
+  "keywords": ["statusline", "bananas", "feed", "fun"]
 }

@@ -1,6 +1,6 @@
 {
   "name": "bananasfromwork",
-  "description": "🍌 Bananas from work at the bottom of your Claude Code sessions",
+  "description": "Rotating Bananas from Work feed posts in your Claude Code statusline",
   "owner": {
     "name": "Oskar Casselryd"
   },
@@ -8,8 +8,8 @@
     {
       "name": "bananasfromwork",
       "source": "./",
-      "description": "🍌 Bananas from work at the bottom of your Claude Code sessions",
-      "version": "1.0.0"
+      "description": "Rotating Bananas from Work feed posts in your Claude Code statusline",
+      "version": "2.0.0"
     }
   ]
 }
