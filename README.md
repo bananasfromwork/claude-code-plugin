@@ -16,7 +16,7 @@ Fable · 🍌 monday banana on the standup desk · @oskar · 2h
 1. In Claude Code:
 
    ```
-   /plugin marketplace add casselryd/bananasfromwork-plugin
+   /plugin marketplace add bananasfromwork/bananasfromwork-plugin
    /plugin install bananasfromwork@bananasfromwork
    ```
 
