@@ -17,7 +17,7 @@ This plugin's statusline script lives at `${CLAUDE_PLUGIN_ROOT}/statusline/statu
 {
   "statusLine": {
     "type": "command",
-    "command": "node \"$(ls -td \"<PLUGIN_PARENT_DIR>\"/*/ | head -1)statusline/statusline.mjs\"",
+    "command": "node \"$(ls -d \"<PLUGIN_PARENT_DIR>\"/*/ | sort -V | tail -1)statusline/statusline.mjs\"",
     "refreshInterval": 10
   }
 }
