@@ -28,6 +28,8 @@ Fable · 🍌 monday banana on the standup desk · @oskar · 2h
    bananasfromwork-login
    ```
 
+   If that command is not on your PATH, run `/bananasfromwork:login` in Claude Code instead and it hands you the exact command for your install.
+
 3. Restart Claude Code. If the statusline does not appear, run `/bananasfromwork:statusline` and Claude wires it into your settings.
 
 That's it. `bananasfromwork-login --logout` signs out again.
