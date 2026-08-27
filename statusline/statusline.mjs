@@ -7,6 +7,14 @@
  * local cache, and a detached background refresh fetches the feed through
  * the repo's `bananas` CLI (which owns auth and token refresh).
  *
+ * Feeds: the regular feed plus the ripe side (dark) feed. Non-subscribers
+ * simply get an empty dark feed back from RLS, so both are always fetched.
+ *
+ * Auth: if ~/.config/bananasfromwork-claude/session.json exists (created by
+ * the /bananasfromwork:login skill), the CLI is pointed at it via
+ * BANANAS_SESSION_FILE, so the plugin has its own login independent of the
+ * repo checkout's dev session. Without it, the CLI's default session is used.
+ *
  * Config resolution for the repo that hosts scripts/bananas.ts:
  *   1. BANANASFROMWORK_REPO env var
  *   2. ~/.config/bananasfromwork-claude/config.json {"repo": "/path"}
@@ -16,13 +24,16 @@ import {
   writeFileSync,
   mkdirSync,
   statSync,
+  existsSync,
 } from 'node:fs';
 import { spawn, execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
-const CONFIG_FILE = join(homedir(), '.config', 'bananasfromwork-claude', 'config.json');
+const CONFIG_DIR = join(homedir(), '.config', 'bananasfromwork-claude');
+const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
+const SESSION_FILE = join(CONFIG_DIR, 'session.json');
 const CACHE_DIR = join(homedir(), '.cache', 'bananasfromwork-claude');
 const CACHE_FILE = join(CACHE_DIR, 'feed.json');
 const ROTATE_SECONDS = 60;
@@ -69,6 +80,45 @@ function runner() {
   return null;
 }
 
+function fetchFeed(cmd, repo, dark) {
+  const args = ['scripts/bananas.ts', 'feed', '--limit', '40'];
+  if (dark) args.push('--dark');
+  const env = existsSync(SESSION_FILE)
+    ? { ...process.env, BANANAS_SESSION_FILE: SESSION_FILE }
+    : process.env;
+  let out;
+  try {
+    out = execFileSync(cmd, args, {
+      cwd: repo,
+      env,
+      encoding: 'utf8',
+      timeout: 30_000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+  } catch (e) {
+    // the CLI prints {"ok":false,...} on stdout even when exiting 1
+    out = e.stdout?.toString() ?? '';
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(out);
+  } catch {
+    return { error: 'bananas CLI gave no JSON (is the repo path right?)' };
+  }
+  if (!parsed.ok) return { error: parsed.error ?? 'feed failed (are you logged in?)' };
+  const posts = [...(parsed.data.contacts ?? []), ...(parsed.data.world ?? [])];
+  return {
+    posts: posts.map((p) => ({
+      id: p.id,
+      caption: (p.caption ?? '').replace(/\s+/g, ' ').trim(),
+      handle: p.author?.handle ?? 'someone',
+      created_at: p.created_at,
+      section: p.section,
+      dark,
+    })),
+  };
+}
+
 async function refreshCache() {
   const prev = readCache();
   const writeState = (state) => {
@@ -87,39 +137,15 @@ async function refreshCache() {
   const cmd = runner();
   if (!cmd) return keepOrError('bananas CLI needs bun or node on PATH');
 
-  let out;
-  try {
-    out = execFileSync(cmd, ['scripts/bananas.ts', 'feed', '--limit', '40'], {
-      cwd: repo,
-      encoding: 'utf8',
-      timeout: 30_000,
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-  } catch (e) {
-    // the CLI prints {"ok":false,...} on stdout even when exiting 1
-    out = e.stdout?.toString() ?? '';
-  }
+  // Regular feed plus the ripe side; without the subscription the dark feed
+  // is just empty, so a dark error only matters if the light fetch also fails.
+  const light = fetchFeed(cmd, repo, false);
+  const dark = fetchFeed(cmd, repo, true);
+  if (!light.posts && !dark.posts) return keepOrError(light.error);
 
-  let parsed;
-  try {
-    parsed = JSON.parse(out);
-  } catch {
-    return keepOrError('bananas CLI gave no JSON (is the repo path right?)');
-  }
-  if (!parsed.ok) {
-    return keepOrError(parsed.error ?? 'feed failed (are you logged in?)');
-  }
-
-  const items = [...(parsed.data.contacts ?? []), ...(parsed.data.world ?? [])]
+  const items = [...(light.posts ?? []), ...(dark.posts ?? [])]
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
-    .slice(0, MAX_ITEMS)
-    .map((p) => ({
-      id: p.id,
-      caption: (p.caption ?? '').replace(/\s+/g, ' ').trim(),
-      handle: p.author?.handle ?? 'someone',
-      created_at: p.created_at,
-      section: p.section,
-    }));
+    .slice(0, MAX_ITEMS);
 
   if (!items.length) return keepOrError('feed is empty, go post a banana');
   writeState({ fetchedAt: Date.now(), items });
@@ -152,11 +178,12 @@ function render(sessionInfo) {
 
   const idx = Math.floor(Date.now() / 1000 / ROTATE_SECONDS) % items.length;
   const item = items[idx];
-  let caption = item.caption || `a fresh banana`;
+  let caption = item.caption || 'a fresh banana';
   if (caption.length > MAX_CAPTION) caption = `${caption.slice(0, MAX_CAPTION - 1)}…`;
+  const glyph = item.dark ? '🌚' : yellow('🍌');
   const body = link(
     `${SITE}/post/${item.id}`,
-    `${yellow('🍌')} ${caption} ${dim(`· @${item.handle} · ${timeAgo(item.created_at)}`)}`,
+    `${glyph} ${caption} ${dim(`· @${item.handle} · ${timeAgo(item.created_at)}`)}`,
   );
   return `${prefix}${body}`;
 }

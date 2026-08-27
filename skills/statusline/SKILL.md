@@ -25,7 +25,7 @@ This plugin's statusline script lives at `${CLAUDE_PLUGIN_ROOT}/statusline/statu
 
 With a stable (unversioned) install path, point straight at `<CLAUDE_PLUGIN_ROOT>/statusline/statusline.mjs` instead.
 
-4. Make sure the feed source is configured: `~/.config/bananasfromwork-claude/config.json` must contain `{"repo": "/path/to/bananasfromwork checkout"}` (or the `BANANASFROMWORK_REPO` env var must be set), and the repo's `bananas` CLI must have a logged-in session (`bun scripts/bananas.ts whoami`).
+4. Make sure the feed source is configured: `~/.config/bananasfromwork-claude/config.json` must contain `{"repo": "/path/to/bananasfromwork checkout"}` (or the `BANANASFROMWORK_REPO` env var must be set), and the statusline needs a session: either run `/bananasfromwork:login` for a plugin-owned login, or rely on the repo CLI's default session.
 5. Verify it renders by piping `{}` to the resolved command. It should print a line containing `bananas from work` or a post caption.
 6. Tell the user to restart Claude Code (or start a new session) to see it. Posts rotate about once a minute and are clickable in terminals with hyperlink support (iTerm2, Kitty, WezTerm, Ghostty).
 

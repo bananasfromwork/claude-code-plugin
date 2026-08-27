@@ -7,6 +7,7 @@ Fable · 🍌 monday banana on the standup desk · @oskar · 2h
 ```
 
 - Shows the latest 20 posts from your feed (contacts and world), rotating about once a minute
+- Includes the ripe side if your account has the subscription: dark posts render with a 🌚 instead of a 🍌 (non-subscribers just never see any)
 - Clickable in terminals with hyperlink support (iTerm2, Kitty, WezTerm, Ghostty): opens the post on bananasfromwork.com
 - Never blocks your session: the line reads a local cache, and a detached background job refreshes the feed every 10 minutes through the repo's `bananas` CLI
 
@@ -26,9 +27,11 @@ Fable · 🍌 monday banana on the standup desk · @oskar · 2h
    echo '{"repo": "/path/to/bananasfromwork"}' > ~/.config/bananasfromwork-claude/config.json
    ```
 
-   The `BANANASFROMWORK_REPO` env var overrides the config file. The CLI must have a logged-in session (`bun scripts/bananas.ts login ...`); whoever is logged in decides whose feed you see.
+   The `BANANASFROMWORK_REPO` env var overrides the config file.
 
-3. If the statusline does not appear after a restart, run `/bananasfromwork:statusline` and Claude will wire it into your settings.
+3. Log in as yourself with `/bananasfromwork:login`. It stores a plugin-owned session in `~/.config/bananasfromwork-claude/session.json` (passed to the CLI via `BANANAS_SESSION_FILE`), so it never touches the session your repo checkout is using. Without it, the statusline falls back to the repo CLI's default session.
+
+4. If the statusline does not appear after a restart, run `/bananasfromwork:statusline` and Claude will wire it into your settings.
 
 ## Requirements
 

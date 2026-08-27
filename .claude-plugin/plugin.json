@@ -2,7 +2,7 @@
   "name": "bananasfromwork",
   "displayName": "Bananas from Work",
   "description": "Rotating posts from your Bananas from Work feed at the bottom of your Claude Code sessions, daily.dev style",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "author": {
     "name": "Oskar Casselryd"
   },
