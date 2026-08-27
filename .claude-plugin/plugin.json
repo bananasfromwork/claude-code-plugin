@@ -1,0 +1,10 @@
+{
+  "name": "bananasfromwork",
+  "displayName": "Bananas from Work",
+  "description": "🍌 Bananas from work at the bottom of your Claude Code sessions",
+  "version": "1.0.0",
+  "author": {
+    "name": "Oskar Casselryd"
+  },
+  "keywords": ["statusline", "bananas", "fun"]
+}
