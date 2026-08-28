@@ -9,7 +9,7 @@
       "name": "bananasfromwork",
       "source": "./",
       "description": "Rotating Bananas from Work feed posts in your Claude Code statusline",
-      "version": "3.1.0"
+      "version": "3.1.1"
     }
   ]
 }

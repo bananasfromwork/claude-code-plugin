@@ -1,38 +1,26 @@
 # 🍌 Bananas from Work, for Claude Code
 
-The latest post from your [Bananas from Work](https://bananasfromwork.com) feed at the bottom of your Claude Code sessions, in the style of the daily.dev headlines plugin.
+Your [Bananas from Work](https://bananasfromwork.com) feed in the Claude Code statusline.
 
 ```
 Fable · 🍌 monday banana on the standup desk · @oskar · 2h
 ```
 
 - Shows the latest post you can see (contacts, world, circles)
-- Includes the ripe side if your account has the subscription: dark posts render with a 🌚 instead of a 🍌
-- Clickable in terminals with hyperlink support (iTerm2, Kitty, WezTerm, Ghostty): opens the post on bananasfromwork.com
-- Never blocks your session: the line reads a local cache, and a detached background job refreshes the feed every 10 minutes straight from the backend
+- Ripe side posts show with a 🌚 if your account has the subscription
+- Click it to open the post (iTerm2, Kitty, WezTerm, Ghostty)
+- Never slows down your session: it reads a local cache that refreshes in the background every 10 minutes
 
-## Install, from scratch
+## Setup
 
-1. In Claude Code:
+In Claude Code:
 
-   ```
-   /plugin marketplace add bananasfromwork/bananasfromwork-plugin
-   /plugin install bananasfromwork@bananasfromwork
-   ```
+```
+/plugin marketplace add bananasfromwork/claude-code-plugin
+/plugin install bananasfromwork@bananasfromwork
+```
 
-   (Or `add /path/to/bananasfromwork-plugin` for a local checkout.)
-
-2. In any terminal, log in (password prompt is hidden; accounts are created at [bananasfromwork.com/signup](https://bananasfromwork.com/signup)):
-
-   ```sh
-   bananasfromwork-login
-   ```
-
-   If that command is not on your PATH, run `/bananasfromwork:login` in Claude Code instead and it hands you the exact command for your install.
-
-3. Restart Claude Code. If the statusline does not appear, run `/bananasfromwork:statusline` and Claude wires it into your settings.
-
-That's it. `bananasfromwork-login --logout` signs out again.
+Then restart Claude Code and run `/bananasfromwork:statusline`. It turns the statusline on and logs you in. No account yet? [Sign up](https://bananasfromwork.com/signup).
 
 ## How it works
 

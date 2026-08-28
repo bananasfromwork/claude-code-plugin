@@ -1,8 +1,8 @@
 {
   "name": "bananasfromwork",
   "displayName": "Bananas from Work",
-  "description": "Your Bananas from Work feed at the bottom of your Claude Code sessions. Self-contained: install, log in once, done",
-  "version": "3.1.0",
+  "description": "Your Bananas from Work feed in the Claude Code statusline",
+  "version": "3.1.1",
   "author": {
     "name": "Oskar Casselryd"
   },
