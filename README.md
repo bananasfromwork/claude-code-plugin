@@ -16,11 +16,11 @@ Fable · 🍌 monday banana on the standup desk · @oskar · 2h
 1. In Claude Code:
 
    ```
-   /plugin marketplace add bananasfromwork/bananasfromwork-plugin
+   /plugin marketplace add bananasfromwork/claude-code-plugin
    /plugin install bananasfromwork@bananasfromwork
    ```
 
-   (Or `add /path/to/bananasfromwork-plugin` for a local checkout.)
+   (Or `add /path/to/claude-code-plugin` for a local checkout.)
 
 2. In any terminal, log in (password prompt is hidden; accounts are created at [bananasfromwork.com/signup](https://bananasfromwork.com/signup)):
 
