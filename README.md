@@ -3,10 +3,10 @@
 Your [Bananas from Work](https://bananasfromwork.com) feed in the Claude Code statusline.
 
 ```
-Fable · 🍌 monday banana on the standup desk · @oskar · 2h
+Fable · 1/5 🍌 monday banana on the standup desk · @oskar · 2h
 ```
 
-- Shows the latest post you can see (contacts, world, circles)
+- Cycles through the 5 latest posts you can see (contacts, world, circles), numbered 1/5 (newest) to 5/5
 - Ripe side posts show with a 🌚 if your account has the subscription
 - Click it to open the post (iTerm2, Kitty, WezTerm, Ghostty)
 - Never slows down your session: it reads a local cache that refreshes in the background every 10 minutes

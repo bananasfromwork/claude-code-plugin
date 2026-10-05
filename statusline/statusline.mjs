@@ -2,10 +2,10 @@
 /**
  * Bananas from Work statusline for Claude Code.
  *
- * The latest post from your Bananas from Work feed while you wait, in the
- * style of the daily.dev headlines plugin: the visible line only reads a
- * local cache, and a detached background refresh fetches the feed straight
- * from the Supabase backend (see api.mjs). One query covers both sides;
+ * The latest posts from your Bananas from Work feed while you wait, numbered
+ * newest first (1/5 is the latest): the visible line only reads a local
+ * cache, and a detached background refresh fetches the feed straight from
+ * the Supabase backend (see api.mjs). One query covers both sides;
  * RLS hides ripe side (dark) posts from accounts without the subscription.
  *
  * Auth: bin/bananasfromwork-login stores a plugin-owned session; without
@@ -20,8 +20,9 @@ import { loadSession, fetchPosts, SITE } from './api.mjs';
 
 const CACHE_DIR = join(homedir(), '.cache', 'bananasfromwork-claude');
 const CACHE_FILE = join(CACHE_DIR, 'feed.json');
+const ROTATE_SECONDS = 60;
 const CACHE_TTL_MS = 10 * 60 * 1000;
-const MAX_ITEMS = 5; // newest first; only the first is shown, the rest are fallback
+const MAX_ITEMS = 5; // newest first
 const MAX_CAPTION = 70;
 const COLOR_ENABLED = !process.env.NO_COLOR;
 
@@ -95,7 +96,9 @@ function render(sessionInfo) {
     return `${prefix}${brand} ${dim(note)}`;
   }
 
-  const item = items[0];
+  const idx = Math.floor(Date.now() / 1000 / ROTATE_SECONDS) % items.length;
+  const item = items[idx];
+  const position = dim(`${idx + 1}/${items.length} `);
   let caption = item.caption || 'a fresh banana';
   if (caption.length > MAX_CAPTION) caption = `${caption.slice(0, MAX_CAPTION - 1)}…`;
   const glyph = item.dark ? '🌚' : yellow('🍌');
@@ -103,7 +106,7 @@ function render(sessionInfo) {
     `${SITE}/post/${item.id}`,
     `${glyph} ${caption} ${dim(`· @${item.handle} · ${timeAgo(item.created_at)}`)}`,
   );
-  return `${prefix}${body}`;
+  return `${prefix}${position}${body}`;
 }
 
 // --- main ---
